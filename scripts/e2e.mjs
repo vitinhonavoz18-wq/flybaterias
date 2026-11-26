@@ -95,12 +95,25 @@ for (const w of [360, 390, 768, 1024, 1440, 2560]) {
   ok("botão flutuante visível no desktop", await page.locator('a[data-track-location="floating"]').isVisible());
   ok("barra fixa oculta no desktop", !(await page.locator('a[data-track="whatsapp_click"][data-track-location="mobile_bar"]').isVisible()));
 
-  // 3D sob demanda
-  const threeBefore = requests.filter((u) => u.includes("/_next/static/chunks/")).length;
+  // 3D do topo: não carrega sem interação (protege a medição do Google)
+  await page.waitForTimeout(2500);
+  ok("3D do topo não carrega sem interação", (await page.locator("[data-hero-stage][data-3d=ready]").count()) === 0);
+  // ?3d=force: o ambiente de testes não tem GPU (renderização por software)
+  await page.goto(BASE + "/?3d=force", { waitUntil: "networkidle" });
+  await page.mouse.move(700, 450);
+  await page.mouse.move(720, 460);
+  // o Three.js (maior arquivo JS) só pode ser baixado DEPOIS do carregamento da página
+  await page.waitForSelector("[data-hero-stage][data-3d=ready]", { timeout: 25000 }).catch(() => null);
+  const timing = await page.evaluate(() => {
+    const nav = performance.getEntriesByType("navigation")[0];
+    const js = performance.getEntriesByType("resource").filter((r) => r.name.includes("/_next/static/chunks/") && r.name.endsWith(".js"));
+    const biggest = js.sort((x, y) => y.decodedBodySize - x.decodedBodySize)[0];
+    return { load: Math.round(nav.loadEventEnd), start: Math.round(biggest.startTime), kb: Math.round(biggest.decodedBodySize / 1024) };
+  });
+  ok("Three.js baixado só após o carregamento da página", timing.start >= timing.load, `load ${timing.load} ms, Three.js (${timing.kb} KB) em ${timing.start} ms`);
+  ok("bateria 3D do topo ativa", (await page.locator("[data-hero-stage][data-3d=ready]").count()) === 1);
   await page.locator("#b3d-title").scrollIntoViewIfNeeded();
   await page.waitForSelector('canvas[aria-label^="Bateria 3D"].opacity-100', { timeout: 20000 }).catch(() => null);
-  const threeAfter = requests.filter((u) => u.includes("/_next/static/chunks/")).length;
-  ok("Three.js carregado só ao chegar na seção 3D", threeAfter > threeBefore, `${threeBefore} → ${threeAfter} arquivos JS`);
   ok("bateria 3D renderizada", (await page.locator('canvas[aria-label^="Bateria 3D"].opacity-100').count()) === 1);
   await page.locator('canvas[aria-label^="Bateria 3D"]').hover();
   await page.mouse.down();

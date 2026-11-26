@@ -44,7 +44,7 @@ function respond(path, entry, status, method) {
   return new Response(method === "HEAD" ? null : entry[0], { status, headers });
 }
 
-export default {
+const worker = {
   async fetch(request) {
     const url = new URL(request.url);
 
@@ -83,3 +83,5 @@ export default {
     return respond("/404.html", files["/404.html"], 404, request.method);
   },
 };
+
+export default worker;

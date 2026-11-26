@@ -1,5 +1,6 @@
 import { MapPin, ShieldCheck, MessageCircle, Wrench } from "lucide-react";
 import { CarSilhouette } from "./CarSilhouette";
+import HeroBattery3D from "@/components/three/HeroBattery3D";
 import { WhatsAppIcon, Bolt } from "@/components/ui/icons";
 import { whatsappUrl, messages } from "@/lib/whatsapp";
 import { site } from "@/config/site";
@@ -88,7 +89,7 @@ export default function Hero() {
 
         {/* ----- palco: carro + bateria ----- */}
         <div className="relative mx-auto w-full max-w-[680px] lg:max-w-none" aria-hidden="true">
-          <div className="relative aspect-[5/4] w-full">
+          <div data-hero-stage className="relative aspect-[5/4] w-full">
             {/* carro ao fundo, em "plano de estúdio" */}
             <CarSilhouette className="fade-up absolute -right-[16%] bottom-[36%] w-[112%] max-w-none opacity-75 [mask-image:linear-gradient(90deg,transparent_0%,#000_22%)] lg:-right-[20%] lg:w-[118%]" />
             {/* piso refletivo */}
@@ -106,6 +107,8 @@ export default function Hero() {
                 className="hero-battery absolute bottom-[4%] left-[42%] w-[68%] -translate-x-1/2 drop-shadow-[0_40px_60px_rgba(0,0,0,0.6)]"
               />
             </picture>
+            {/* versão 3D interativa (substitui a imagem quando estiver pronta) */}
+            <HeroBattery3D />
             {/* anel de energia */}
             <svg className="absolute bottom-[1%] left-[42%] w-[80%] -translate-x-1/2" viewBox="0 0 400 60" fill="none">
               <ellipse cx="200" cy="30" rx="196" ry="26" stroke="#FFD000" strokeOpacity="0.55" strokeWidth="1.2" pathLength={990} className="energy-flow" />

@@ -493,3 +493,23 @@ body {
 [data-offscreen] .hero-battery {
   animation-play-state: paused;
 }
+
+/* Topo do site: quando o 3D fica pronto, a imagem estática sai e o 3D assume a flutuação */
+.hero-battery {
+  transition: opacity 0.7s var(--ease-out-expo);
+}
+[data-hero-stage][data-3d="ready"] .hero-battery {
+  animation: none;
+  opacity: 0;
+}
+.hero-battery-3d {
+  animation: float 7s ease-in-out 1.6s infinite;
+}
+[data-offscreen] .hero-battery-3d {
+  animation-play-state: paused;
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-battery-3d {
+    animation: none !important;
+  }
+}
