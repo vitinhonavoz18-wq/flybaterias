@@ -1,0 +1,72 @@
+# CI/CD da FlyBaterias
+# - Em todo push e pull request: typecheck, lint, build e testes E2E.
+# - Em push na branch principal (main): publica no Cloudflare Workers
+#   SOMENTE se todos os testes passarem.
+# Requer o secret CLOUDFLARE_API_TOKEN (GitHub → Settings → Secrets and variables → Actions).
+name: CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: flybaterias-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  NEXT_PUBLIC_SITE_URL: https://flybaterias.conectfly.com.br
+
+jobs:
+  test:
+    name: Testes
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run build
+      - name: Instalar navegador de testes
+        run: npm install --no-save playwright@1 && npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+      - run: npm audit --omit=dev --audit-level=high
+
+  deploy:
+    name: Publicar em produção
+    needs: test
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: production
+      url: https://flybaterias.conectfly.com.br
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: npm run build:worker
+      - name: Deploy no Cloudflare Workers
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          command: deploy --message "GitHub ${{ github.sha }}"
+      - name: Verificar site publicado
+        run: |
+          sleep 10
+          code=$(curl -s -o /dev/null -w "%{http_code}" https://flybaterias.conectfly.com.br/)
+          echo "HTTP $code"
+          test "$code" = "200"

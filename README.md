@@ -47,8 +47,7 @@ Base de aplicação validada (qual bateria serve em cada carro): implementar em 
 - [ ] Confirmar **entrega / instalação no local / teste de bateria** (`site.ts → services`)
 - [ ] **Horários**, **formas de pagamento**, **regra de garantia**, **endereço** (se houver loja), **razão social/CNPJ**
 - [ ] **Bairros/municípios atendidos** confirmados (`site.ts → region.confirmedAreas`)
-- [ ] Perfil do **Instagram** e site da **Conectfly** (links)
-- [ ] **Domínio oficial** (`NEXT_PUBLIC_SITE_URL`)
+- [ ] Perfil do **Instagram** (link)
 - [ ] **Fotos reais e autorizadas** dos produtos e logomarcas oficiais das marcas (`public/brands/`)
 - [ ] Avaliações reais (Google) para ativar a seção de prova social
 - [ ] Revisão jurídica da Política de Privacidade e dos Termos de Uso
@@ -74,11 +73,16 @@ Base de aplicação validada (qual bateria serve em cada carro): implementar em 
 - Nenhum dado pessoal (bairro, CEP, telefone) é enviado às plataformas.
 - Clique no WhatsApp = **intenção**. Venda real deve ser importada depois (conversões offline do Google Ads / CRM).
 
-## Publicação (Cloudflare Pages recomendado)
+## Publicação (produção)
 
-- Comando de build: `npm run build` · Pasta de saída: `out`
-- Variáveis: `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_GTM_ID`
-- `public/_headers` já define cabeçalhos de segurança (CSP, HSTS etc.) e cache.
+- **Site:** https://flybaterias.conectfly.com.br
+- **Infraestrutura:** Cloudflare Workers (Worker `flybaterias`, conta da Conectfly) com domínio personalizado. O certificado SSL é automático (`*.conectfly.com.br`).
+- **Como funciona:** o `next build` gera o site estático em `out/`; `scripts/build-worker.mjs` empacota esses arquivos dentro do Worker (`worker/index.mjs`), que os entrega com cabeçalhos de segurança (CSP, HSTS, X-Frame-Options…), cache, ETag, HTTPS obrigatório, barra final canônica e página 404.
+- **Publicar manualmente:** `CLOUDFLARE_API_TOKEN=... npm run deploy`
+- **Deploy automático:** `.github/workflows/deploy.yml`. Em todo push e PR, roda typecheck, lint, build e testes E2E. Em push na `main`, publica se tudo passar. Requer o secret `CLOUDFLARE_API_TOKEN` no GitHub (permissões: *Workers Scripts: Edit* e *Workers Routes: Edit*, conta da Conectfly).
+- **Histórico de versões e rollback:** Cloudflare → Workers & Pages → `flybaterias` → *Deployments*: cada publicação fica registrada e pode ser revertida com um clique. Pelo terminal: `npx wrangler deployments list` e `npx wrangler rollback`.
+- **Logs:** *Observability* ativado no Worker (Cloudflare → `flybaterias` → *Logs*).
+- **Testar o site publicado:** `E2E_BASE=https://flybaterias.conectfly.com.br npm run test:e2e`
 
 ## Imagens geradas a partir do modelo 3D
 

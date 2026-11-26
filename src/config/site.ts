@@ -22,7 +22,7 @@ export const site = {
     "Baterias automotivas em Salvador e região. Atendimento especializado pelo WhatsApp para encontrar a bateria certa para o seu veículo.",
 
   /** Endereço oficial do site. Defina NEXT_PUBLIC_SITE_URL no ambiente de produção. */
-  url: (process.env.NEXT_PUBLIC_SITE_URL || "https://www.flybaterias.com.br").replace(/\/$/, ""),
+  url: (process.env.NEXT_PUBLIC_SITE_URL || "https://flybaterias.conectfly.com.br").replace(/\/$/, ""),
 
   contact: {
     /**
@@ -91,7 +91,7 @@ export const site = {
 
   developer: {
     name: "Conectfly",
-    url: "https://www.conectfly.com.br", // PENDENTE: confirmar site oficial da Conectfly
+    url: "https://conectfly.com.br",
   },
 } as const;
 

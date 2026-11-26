@@ -9,7 +9,8 @@ import fs from "node:fs";
 import path from "node:path";
 
 const PORT = 4173;
-const BASE = `http://localhost:${PORT}`;
+// E2E_BASE permite testar um servidor externo (ex.: o site publicado)
+const BASE = process.env.E2E_BASE || `http://localhost:${PORT}`;
 const OUT = path.resolve("out");
 
 // Servidor estático mínimo (equivalente ao de produção)
@@ -26,7 +27,7 @@ const server = http.createServer((req, res) => {
   res.writeHead(200, { "content-type": types[path.extname(f)] || "application/octet-stream" });
   fs.createReadStream(f).pipe(res);
 });
-await new Promise((r) => server.listen(PORT, r));
+if (!process.env.E2E_BASE) await new Promise((r) => server.listen(PORT, r));
 void spawn;
 
 const results = [];
@@ -35,7 +36,7 @@ const ok = (name, cond, detail = "") => {
   console.log(`${cond ? "✔" : "✘"} ${name}${detail ? " — " + detail : ""}`);
 };
 
-const browser = await chromium.launch({ args: ["--use-angle=swiftshader", "--enable-unsafe-swiftshader"] });
+const browser = await chromium.launch({ args: ["--use-angle=swiftshader", "--enable-unsafe-swiftshader", ...(process.env.E2E_IGNORE_TLS ? ["--ignore-certificate-errors"] : [])] });
 
 async function open(viewport, opts = {}) {
   const ctx = await browser.newContext({ viewport, ...opts });
@@ -163,7 +164,7 @@ for (const w of [360, 390, 768, 1024, 1440, 2560]) {
 }
 
 await browser.close();
-server.close();
+if (!process.env.E2E_BASE) server.close();
 const failed = results.filter((r) => !r.pass);
 console.log(`\n${results.length - failed.length}/${results.length} verificações passaram.`);
 process.exit(failed.length ? 1 : 0);

@@ -8,3 +8,4 @@ next-env.d.ts
 !.env.example
 test-results/
 .DS_Store
+.worker/

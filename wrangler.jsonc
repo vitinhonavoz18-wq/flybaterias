@@ -1,0 +1,15 @@
+{
+  // Publicação no Cloudflare Workers — mesmo padrão dos demais sites da Conectfly.
+  // O site é estático (out/ gerado pelo `next build`) e fica empacotado no Worker
+  // (veja worker/index.mjs e scripts/build-worker.mjs).
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "flybaterias",
+  "main": "worker/index.mjs",
+  "compatibility_date": "2026-11-01",
+  "account_id": "ba1021373e6d860efc75b69190286dd0",
+  "rules": [{ "type": "Data", "globs": ["**/*.bin"], "fallthrough": false }],
+  "routes": [{ "pattern": "flybaterias.conectfly.com.br", "custom_domain": true }],
+  "workers_dev": true,
+  "preview_urls": false,
+  "observability": { "enabled": true }
+}

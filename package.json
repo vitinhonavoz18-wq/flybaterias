@@ -2,7 +2,7 @@
   "name": "flybaterias-site",
   "version": "1.0.0",
   "private": true,
-  "description": "Site oficial da FlyBaterias — baterias automotivas em Salvador e região.",
+  "description": "Site oficial da FlyBaterias \u2014 baterias automotivas em Salvador e regi\u00e3o.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -11,7 +11,10 @@
     "typecheck": "tsc --noEmit",
     "test:e2e": "node scripts/e2e.mjs",
     "render:assets": "node scripts/render-assets.mjs",
-    "check": "npm run typecheck && npm run lint && npm run build && npm run test:e2e"
+    "check": "npm run typecheck && npm run lint && npm run build && npm run test:e2e",
+    "deploy": "npm run build && npm run build:worker && wrangler deploy",
+    "preview:cf": "npm run build && npm run build:worker && wrangler dev",
+    "build:worker": "node scripts/build-worker.mjs"
   },
   "dependencies": {
     "lucide-react": "^1.80.0",
@@ -31,6 +34,7 @@
     "postcss": "^8.5.33",
     "serve": "^14.2.8",
     "tailwindcss": "^4.3.5",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "wrangler": "^4.168.0"
   }
 }
