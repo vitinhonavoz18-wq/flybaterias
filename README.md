@@ -52,6 +52,19 @@ Base de aplicação validada (qual bateria serve em cada carro): implementar em 
 - [ ] Avaliações reais (Google) para ativar a seção de prova social
 - [ ] Revisão jurídica da Política de Privacidade e dos Termos de Uso
 
+## Campanhas promocionais (Black Friday, Natal, Carnaval…)
+
+Configuração em **`src/config/campaigns.json`**: nome, % de desconto, início, fim (sempre com fuso, ex.: `-03:00` = Salvador), textos, mensagem do WhatsApp, tema e regras (barra, contador, hero, selos).
+
+- `npm run build:all` gera o site original (`out/`) e uma versão para cada campanha habilitada que ainda não terminou (`out-campaigns/<id>/`).
+- O **Worker escolhe a versão pelo relógio do servidor** a cada visita: dentro do período → campanha; fora → site original. **O fim da campanha não exige novo deploy.**
+- O contador é absoluto (não reinicia ao atualizar) e é corrigido pela hora do servidor (`<html data-server-now>`), funcionando mesmo com o relógio do celular errado. Ao zerar, a página recarrega no site original.
+- Preço promocional: `promoPrice()` em `src/config/campaigns.ts`, aplicado só a produtos com preço real cadastrado.
+- Eventos levam `promo_campaign` e `promo_discount` (ex.: filtrar conversões da Black Friday no GA4/Google Ads). Também: `campaign_expired`.
+- Encerrar antes do prazo: `"enabled": false` + deploy.
+- Testar com relógio simulado: `scripts/wdev.sh "2026-11-28T12:00:00-03:00"` e `npm run test:campaign`.
+- Limite: o plano gratuito de Workers aceita 3 MB compactados; o site + 1 campanha ocupa ~2,6 MB. Mantenha **uma campanha por vez** no pacote.
+
 ## Rastreamento (Google Ads / GA4 / Meta)
 
 1. Crie um contêiner no Google Tag Manager e defina `NEXT_PUBLIC_GTM_ID` (ex.: `GTM-XXXXXXX`) no ambiente de hospedagem.
@@ -78,7 +91,7 @@ Base de aplicação validada (qual bateria serve em cada carro): implementar em 
 - **Site:** https://flybaterias.conectfly.com.br
 - **Infraestrutura:** Cloudflare Workers (Worker `flybaterias`, conta da Conectfly) com domínio personalizado. O certificado SSL é automático (`*.conectfly.com.br`).
 - **Como funciona:** o `next build` gera o site estático em `out/`; `scripts/build-worker.mjs` empacota esses arquivos dentro do Worker (`worker/index.mjs`), que os entrega com cabeçalhos de segurança (CSP, HSTS, X-Frame-Options…), cache, ETag, HTTPS obrigatório, barra final canônica e página 404.
-- **Publicar manualmente:** `CLOUDFLARE_API_TOKEN=... npm run deploy`
+- **Publicar manualmente:** `CLOUDFLARE_API_TOKEN=... npm run deploy` (build do site original + campanhas, empacotamento e deploy)
 - **Deploy automático:** `.github/workflows/deploy.yml`. Em todo push e PR, roda typecheck, lint, build e testes E2E. Em push na `main`, publica se tudo passar. Requer o secret `CLOUDFLARE_API_TOKEN` no GitHub (permissões: *Workers Scripts: Edit* e *Workers Routes: Edit*, conta da Conectfly).
 - **Histórico de versões e rollback:** Cloudflare → Workers & Pages → `flybaterias` → *Deployments*: cada publicação fica registrada e pode ser revertida com um clique. Pelo terminal: `npx wrangler deployments list` e `npx wrangler rollback`.
 - **Logs:** *Observability* ativado no Worker (Cloudflare → `flybaterias` → *Logs*).

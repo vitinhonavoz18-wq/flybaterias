@@ -8,6 +8,8 @@ import { WhatsAppIcon } from "@/components/ui/icons";
 import { navLinks } from "@/config/nav";
 import { whatsappUrl, messages } from "@/lib/whatsapp";
 import { site } from "@/config/site";
+import { activeCampaign } from "@/config/campaigns";
+import PromoBar from "@/components/campaign/PromoBar";
 
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);
@@ -36,7 +38,8 @@ export default function Header() {
       <a href="#conteudo" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-full focus:bg-volt focus:px-4 focus:py-2 focus:text-ink">
         Pular para o conteúdo
       </a>
-      <div className="container-fly flex h-[var(--header-h)] items-center justify-between gap-6">
+      <PromoBar />
+      <div className="container-fly flex h-[var(--nav-h)] items-center justify-between gap-6">
         <Link href="/" aria-label={`${site.name} — página inicial`} className="shrink-0">
           <Logo priority className="h-11 w-auto md:h-12" />
         </Link>
@@ -64,7 +67,7 @@ export default function Header() {
             className="btn btn-volt hidden !min-h-[44px] !px-5 text-[0.9rem] sm:inline-flex"
           >
             <WhatsAppIcon className="size-[18px]" />
-            Pedir pelo WhatsApp
+            {activeCampaign ? `Garantir ${activeCampaign.discountPercent}% OFF` : "Pedir pelo WhatsApp"}
           </a>
           <button
             type="button"

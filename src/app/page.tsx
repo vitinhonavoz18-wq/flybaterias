@@ -2,6 +2,8 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import ContactBar from "@/components/layout/ContactBar";
 import Hero from "@/components/sections/Hero";
+import CampaignHero from "@/components/campaign/CampaignHero";
+import { activeCampaign } from "@/config/campaigns";
 import BrandMarquee from "@/components/sections/BrandMarquee";
 import SelectorSection from "@/components/sections/SelectorSection";
 import Battery3DSection from "@/components/sections/Battery3DSection";
@@ -23,7 +25,7 @@ export default function Home() {
       <JsonLd />
       <Header />
       <main id="conteudo">
-        <Hero />
+        {activeCampaign?.rules.replaceHero ? <CampaignHero campaign={activeCampaign} /> : <Hero />}
         <BrandMarquee />
         <SelectorSection />
 

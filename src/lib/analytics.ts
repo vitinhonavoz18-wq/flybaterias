@@ -1,6 +1,7 @@
 "use client";
 
 import { tracking } from "@/config/tracking";
+import { activeCampaign } from "@/config/campaigns";
 
 /**
  * Camada de eventos (dataLayer) para GTM / GA4 / Google Ads / Meta Pixel.
@@ -22,7 +23,9 @@ export type TrackEvent =
   | "quote_request"
   | "region_check"
   | "battery_3d_interaction"
-  | "faq_open";
+  | "faq_open"
+  | "campaign_view"
+  | "campaign_expired";
 
 type Params = Record<string, string | number | boolean | undefined>;
 
@@ -77,6 +80,9 @@ export function track(event: TrackEvent, params: Params = {}) {
     campaign_source: utm.utm_source,
     campaign_medium: utm.utm_medium,
     campaign_name: utm.utm_campaign,
+    // Campanha promocional ativa nesta versão do site (ex.: black-friday-2026)
+    promo_campaign: activeCampaign?.id,
+    promo_discount: activeCampaign?.discountPercent,
     ...params,
   };
   window.dataLayer = window.dataLayer || [];

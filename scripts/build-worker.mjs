@@ -1,12 +1,14 @@
 /**
- * Gera .worker/manifest.mjs: importa cada arquivo de out/ como módulo binário
- * para o Worker servir o site sem depender do upload de "static assets".
+ * Gera .worker/manifest.mjs: importa cada arquivo do site como módulo binário
+ * para o Worker servir sem depender do upload de "static assets".
+ *  - files: site original (out/)
+ *  - campaigns: versões de campanha (out-campaigns/<id>/) com início e fim
+ * Arquivos idênticos entre versões são incluídos uma única vez.
  */
 import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
 
-const OUT = path.resolve("out");
 const DEST = path.resolve(".worker");
 const SKIP = new Set(["/_headers", "/404/index.html", "/_not-found/index.html"]);
 const TYPES = {
@@ -16,33 +18,53 @@ const TYPES = {
   ".jpg": "image/jpeg", ".ico": "image/x-icon", ".svg": "image/svg+xml", ".woff2": "font/woff2",
 };
 
-const list = [];
-(function walk(dir) {
-  for (const f of fs.readdirSync(dir, { withFileTypes: true })) {
-    const full = path.join(dir, f.name);
-    if (f.isDirectory()) walk(full);
-    else list.push(full);
-  }
-})(OUT);
-
 fs.rmSync(DEST, { recursive: true, force: true });
-fs.mkdirSync(DEST, { recursive: true });
+fs.mkdirSync(path.join(DEST, "f"), { recursive: true });
+
+const bySha = new Map();
 let imports = "";
-let entries = "";
+let unique = 0;
 let total = 0;
-list.forEach((full, i) => {
-  const rel = "/" + path.relative(OUT, full).split(path.sep).join("/");
-  if (SKIP.has(rel)) return;
-  const type = TYPES[path.extname(full)] || "application/octet-stream";
-  const buf = fs.readFileSync(full);
-  total += buf.length;
-  const etag = '"' + crypto.createHash("sha1").update(buf).digest("hex").slice(0, 16) + '"';
-  // .bin garante que o Wrangler trate o arquivo como binário (regra "Data")
-  const target = path.join(DEST, "f", String(i) + ".bin");
-  fs.mkdirSync(path.dirname(target), { recursive: true });
-  fs.copyFileSync(full, target);
-  imports += `import f${i} from "./f/${i}.bin";\n`;
-  entries += `  ${JSON.stringify(rel)}: [f${i}, ${JSON.stringify(type)}, ${JSON.stringify(etag)}],\n`;
-});
-fs.writeFileSync(path.join(DEST, "manifest.mjs"), `${imports}\nexport const files = {\n${entries}};\n`);
-console.log(`Worker manifest: ${entries.split("\n").length - 1} arquivos, ${(total / 1024 / 1024).toFixed(2)} MB (antes da compressão).`);
+
+function collect(root) {
+  const list = [];
+  (function walk(dir) {
+    for (const f of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, f.name);
+      if (f.isDirectory()) walk(full);
+      else list.push(full);
+    }
+  })(root);
+  let entries = "";
+  for (const full of list) {
+    const rel = "/" + path.relative(root, full).split(path.sep).join("/");
+    if (SKIP.has(rel)) continue;
+    const buf = fs.readFileSync(full);
+    const sha = crypto.createHash("sha1").update(buf).digest("hex");
+    let name = bySha.get(sha);
+    if (!name) {
+      name = `f${unique++}`;
+      bySha.set(sha, name);
+      fs.writeFileSync(path.join(DEST, "f", `${name}.bin`), buf); // .bin → regra "Data" do Wrangler
+      imports += `import ${name} from "./f/${name}.bin";\n`;
+      total += buf.length;
+    }
+    const type = TYPES[path.extname(full)] || "application/octet-stream";
+    entries += `  ${JSON.stringify(rel)}: [${name}, ${JSON.stringify(type)}, ${JSON.stringify('"' + sha.slice(0, 16) + '"')}],\n`;
+  }
+  return { entries, count: list.length };
+}
+
+const base = collect(path.resolve("out"));
+let campaignsCode = "";
+const schedulePath = path.resolve("out-campaigns/schedule.json");
+const schedule = fs.existsSync(schedulePath) ? JSON.parse(fs.readFileSync(schedulePath, "utf8")) : [];
+for (const s of schedule) {
+  const dir = path.resolve("out-campaigns", s.id);
+  if (!fs.existsSync(dir)) continue;
+  const c = collect(dir);
+  campaignsCode += `  { id: ${JSON.stringify(s.id)}, start: ${s.start}, end: ${s.end}, files: {\n${c.entries}  } },\n`;
+}
+
+fs.writeFileSync(path.join(DEST, "manifest.mjs"), `${imports}\nexport const files = {\n${base.entries}};\n\nexport const campaigns = [\n${campaignsCode}];\n`);
+console.log(`Worker manifest: ${unique} arquivos únicos, ${(total / 1024 / 1024).toFixed(2)} MB; campanhas: ${schedule.map((s) => s.id).join(", ") || "nenhuma"}.`);

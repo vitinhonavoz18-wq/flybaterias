@@ -7,6 +7,7 @@ import { vehicleMessage, whatsappUrl, type VehicleQuery } from "@/lib/whatsapp";
 import { findCompatibleBatteries } from "@/lib/applications";
 import { track } from "@/lib/analytics";
 import { WhatsAppIcon } from "@/components/ui/icons";
+import { activeCampaign } from "@/config/campaigns";
 
 type StepId = "make" | "model" | "year" | "engine" | "startStop" | "district" | "result";
 const STEPS: { id: Exclude<StepId, "result">; label: string; title: string }[] = [
@@ -313,7 +314,7 @@ export default function BatterySelector() {
                   track("whatsapp_click", { cta_location: "selector" });
                 }}
               >
-                <WhatsAppIcon className="size-5" /> Consultar opções e preços
+                <WhatsAppIcon className="size-5" /> {activeCampaign ? `Consultar com ${activeCampaign.discountPercent}% OFF` : "Consultar opções e preços"}
               </a>
               <button type="button" onClick={reset} className="btn btn-ghost w-full sm:w-auto">
                 <RotateCcw className="size-4" /> Recomeçar

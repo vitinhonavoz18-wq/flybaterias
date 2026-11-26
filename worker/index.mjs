@@ -4,7 +4,7 @@
  * próprio Worker, com cabeçalhos de segurança, cache e HTTPS obrigatório.
  * O mapa de arquivos (.worker/manifest.mjs) é gerado por scripts/build-worker.mjs.
  */
-import { files } from "../.worker/manifest.mjs";
+import { files, campaigns } from "../.worker/manifest.mjs";
 
 const SECURITY_HEADERS = {
   "X-Content-Type-Options": "nosniff",
@@ -36,17 +36,38 @@ function cacheControl(path) {
   return "public, max-age=2592000"; // imagens e ícones: 30 dias
 }
 
-function respond(path, entry, status, method) {
+/** Campanha ativa agora (relógio do servidor). CLOCK_OFFSET_MS só é usado em testes. */
+function currentCampaign(now) {
+  return campaigns.find((c) => now >= c.start && now <= c.end) || null;
+}
+
+function respond(path, entry, status, method, ctx) {
   const headers = new Headers(SECURITY_HEADERS);
+  const isHtml = entry[1].startsWith("text/html");
   headers.set("Content-Type", entry[1]);
+  if (ctx.campaign) headers.set("X-Campaign", ctx.campaign.id);
+  if (isHtml) {
+    // HTML sempre revalidado (a versão muda quando a campanha começa/termina)
+    headers.set("Cache-Control", "no-cache");
+    const res = new Response(method === "HEAD" ? null : entry[0], { status, headers });
+    if (method === "HEAD") return res;
+    // Hora do servidor para o contador corrigir relógios de aparelhos desajustados
+    return new HTMLRewriter()
+      .on("html", { element: (el) => el.setAttribute("data-server-now", String(ctx.now)) })
+      .transform(res);
+  }
   headers.set("Cache-Control", status === 200 ? cacheControl(path) : "no-store");
   headers.set("ETag", entry[2]);
   return new Response(method === "HEAD" ? null : entry[0], { status, headers });
 }
 
 const worker = {
-  async fetch(request) {
+  async fetch(request, env) {
     const url = new URL(request.url);
+    const now = Date.now() + (Number(env?.CLOCK_OFFSET_MS) || 0);
+    const campaign = currentCampaign(now);
+    const ctx = { now, campaign };
+    const find = (p) => (campaign && campaign.files[p]) || files[p];
 
     // HTTP → HTTPS
     if (url.protocol === "http:") {
@@ -66,21 +87,21 @@ const worker = {
     if (path.includes("..")) path = "/";
 
     const lookup = path.endsWith("/") ? path + "index.html" : path;
-    const entry = files[lookup];
+    const entry = find(lookup);
     if (entry) {
-      if (request.headers.get("If-None-Match") === entry[2]) {
+      if (!entry[1].startsWith("text/html") && request.headers.get("If-None-Match") === entry[2]) {
         return new Response(null, { status: 304, headers: { ETag: entry[2], "Cache-Control": cacheControl(lookup) } });
       }
-      return respond(lookup, entry, 200, request.method);
+      return respond(lookup, entry, 200, request.method, ctx);
     }
 
     // URL sem barra final de uma página existente → redireciona para a versão canônica
-    if (!path.endsWith("/") && files[path + "/index.html"]) {
+    if (!path.endsWith("/") && find(path + "/index.html")) {
       url.pathname = path + "/";
       return Response.redirect(url.toString(), 301);
     }
 
-    return respond("/404.html", files["/404.html"], 404, request.method);
+    return respond("/404.html", find("/404.html"), 404, request.method, ctx);
   },
 };
 

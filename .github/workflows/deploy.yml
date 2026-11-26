@@ -57,7 +57,8 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npm run build
+      - name: Build do site original + campanhas ativas
+        run: npm run build:all
       - run: npm run build:worker
       - name: Deploy no Cloudflare Workers
         uses: cloudflare/wrangler-action@v3

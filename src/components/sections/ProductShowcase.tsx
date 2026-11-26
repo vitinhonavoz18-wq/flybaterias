@@ -6,6 +6,9 @@ import { enabledCategories, products } from "@/config/catalog";
 import { whatsappUrl, messages } from "@/lib/whatsapp";
 import { track } from "@/lib/analytics";
 import { WhatsAppIcon } from "@/components/ui/icons";
+import { activeCampaign, promoPrice } from "@/config/campaigns";
+
+const brl = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
 /**
  * Vitrine premium. Enquanto não houver produtos reais cadastrados,
@@ -16,6 +19,7 @@ export default function ProductShowcase() {
   const [active, setActive] = useState(0);
   const cat = cats[active];
   const catProducts = products.filter((p) => p.categoryId === cat.id);
+  const promo = activeCampaign?.rules.productBadges ? activeCampaign : null;
 
   return (
     <div className="grid gap-8 lg:grid-cols-[1.15fr_0.85fr] lg:gap-12">
@@ -29,7 +33,12 @@ export default function ProductShowcase() {
         <span aria-hidden="true" className="display pointer-events-none absolute left-6 top-5 text-[clamp(3.5rem,10vw,7.5rem)] text-white/[0.05]">
           {cat.short}
         </span>
-        <div key={cat.id} className="step-in absolute inset-0 grid place-items-center p-8">
+        {promo && (
+          <span className="promo-badge absolute right-5 top-5 z-10">
+            -{promo.discountPercent}% · {promo.texts.badge}
+          </span>
+        )}
+        <div key={cat.id} className="product-stage step-in absolute inset-0 grid place-items-center p-8">
           <picture>
             <source srcSet={`${cat.image}.avif`} type="image/avif" />
             { }
@@ -104,7 +113,20 @@ export default function ProductShowcase() {
                     onClick={() => (track("product_inquiry", { product: p.slug }), track("whatsapp_click", { cta_location: "product_card" }))}
                     className="btn btn-ghost !min-h-[40px] !px-4 text-sm"
                   >
-                    {p.price ? p.price.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "Consultar valor"}
+                    {p.price ? (
+                      promo ? (
+                        <span className="flex flex-col items-end leading-tight">
+                          <s className="text-[0.72rem] text-steel">{brl(p.price)}</s>
+                          <span className="text-volt">{brl(promoPrice(p.price, promo))}</span>
+                        </span>
+                      ) : (
+                        brl(p.price)
+                      )
+                    ) : promo ? (
+                      promo.texts.productCta
+                    ) : (
+                      "Consultar valor"
+                    )}
                   </a>
                 </li>
               ))}
@@ -120,10 +142,12 @@ export default function ProductShowcase() {
               className="btn btn-volt w-full sm:w-auto"
             >
               <WhatsAppIcon className="size-5" />
-              Consultar preços
+              {promo ? `${promo.texts.productCta} com ${promo.discountPercent}% OFF` : "Consultar preços"}
               <ArrowUpRight className="size-4" />
             </a>
-            <p className="mt-3 text-[0.82rem] text-steel">Valores e disponibilidade são informados no atendimento.</p>
+            <p className="mt-3 text-[0.82rem] text-steel">
+              {promo ? promo.texts.productNote : "Valores e disponibilidade são informados no atendimento."}
+            </p>
           </div>
         </div>
       </div>

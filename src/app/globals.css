@@ -46,7 +46,9 @@
 
 :root {
   color-scheme: dark;
-  --header-h: 72px;
+  --nav-h: 72px;
+  --promo-h: 0px;
+  --header-h: calc(var(--nav-h) + var(--promo-h));
 }
 
 html {
@@ -511,5 +513,311 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .hero-battery-3d {
     animation: none !important;
+  }
+}
+
+/* ============================================================
+   CAMPANHAS — tema e componentes (ativados por <html data-campaign>)
+   Sem campanha, nada abaixo é aplicado: o site mantém a identidade original.
+   ============================================================ */
+:root[data-campaign] {
+  --promo-h: 34px;
+}
+@media (min-width: 768px) {
+  :root[data-campaign] {
+    --promo-h: 38px;
+  }
+}
+/* Tema "black": preto e grafite, com azul e amarelo da marca como luz */
+:root[data-campaign-theme="black"] {
+  --color-abyss: #0a0a0c;
+  --color-abyss-2: #131317;
+  --color-abyss-3: #1b1b21;
+  --color-ink: #050506;
+  --color-ink-2: #111114;
+  --color-steel: #a7acb8;
+}
+
+/* Barra promocional */
+.promo-bar-sheen {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 35%, rgb(255 255 255 / 0.55) 50%, transparent 65%);
+  transform: translateX(-100%);
+  animation: bar-sheen 5s var(--ease-in-out-quint) 1.5s infinite;
+}
+@keyframes bar-sheen {
+  0%,
+  60% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* "30%": maior elemento da dobra, com revelação e reflexo de luz */
+.bf-discount {
+  position: relative;
+  display: block;
+  font-size: clamp(5.4rem, 24vw, 13.5rem);
+  font-weight: 900;
+  font-stretch: 118%;
+  letter-spacing: -0.06em;
+  line-height: 0.78;
+  color: var(--color-volt);
+  background: linear-gradient(180deg, #fff6c2 0%, #ffd000 38%, #f0a800 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 10px 40px rgb(255 208 0 / 0.35));
+  animation: discount-in 1.2s var(--ease-out-expo) 0.15s both;
+  padding-right: 0.04em;
+}
+.bf-discount::after {
+  /* reflexo que atravessa os números (somente transform/opacity: leve) */
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 40%, rgb(255 255 255 / 0.95) 50%, transparent 60%) no-repeat;
+  background-size: 250% 100%;
+  background-position: 120% 0;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: discount-sheen 1.6s var(--ease-in-out-quint) 1.3s 2;
+}
+@keyframes discount-in {
+  /* só transform/opacity: barato para o celular e o texto já aparece no 1º quadro */
+  from {
+    opacity: 0.3;
+    transform: translate3d(0, 0.1em, 0) scale(1.05);
+  }
+}
+@keyframes discount-sheen {
+  from {
+    background-position: 120% 0;
+  }
+  to {
+    background-position: -40% 0;
+  }
+}
+.bf-off {
+  font-size: clamp(2.1rem, 9vw, 4.8rem);
+  font-weight: 900;
+  font-stretch: 118%;
+  letter-spacing: -0.03em;
+  line-height: 0.8;
+  color: #fff;
+  padding-bottom: 0.08em;
+}
+.bf-sub {
+  display: block;
+  margin-top: 0.9rem;
+  font-size: clamp(1.15rem, 4.6vw, 1.9rem);
+  font-weight: 800;
+  font-stretch: 120%;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #fff;
+}
+.bf-sub::after {
+  content: "";
+  display: block;
+  width: 3.2em;
+  height: 4px;
+  margin-top: 0.5rem;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--color-volt), transparent);
+}
+
+/* Feixe de luz de estúdio sobre as baterias */
+.bf-beam {
+  background: conic-gradient(from 180deg at 50% 0%, transparent 155deg, rgb(255 255 255 / 0.1) 172deg, rgb(91 155 255 / 0.18) 180deg, rgb(255 255 255 / 0.1) 188deg, transparent 205deg);
+  filter: blur(6px);
+}
+
+/* Partículas de energia (transform/opacity: processadas pela GPU) */
+.particle {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border-radius: 999px;
+  opacity: 0;
+  animation: particle-rise linear infinite;
+}
+.particle-y {
+  background: #ffd000;
+  box-shadow: 0 0 8px 2px rgb(255 208 0 / 0.7);
+}
+.particle-b {
+  background: #8fb6ff;
+  box-shadow: 0 0 8px 2px rgb(91 155 255 / 0.7);
+}
+@keyframes particle-rise {
+  0% {
+    transform: translate3d(0, 0, 0) scale(0.6);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: translate3d(14px, -55vh, 0) scale(1);
+    opacity: 0;
+  }
+}
+
+/* Selo 30% OFF girando */
+.seal {
+  animation: seal-in 0.9s var(--ease-out-expo) 0.9s both;
+}
+.seal-ring {
+  animation: spin 22s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes seal-in {
+  from {
+    opacity: 0;
+    transform: scale(0.4) rotate(-40deg);
+  }
+}
+
+/* Profundidade: baterias ao fundo flutuam em ritmos diferentes */
+.bf-depth {
+  animation: float 9s ease-in-out infinite;
+}
+.bf-depth-2 {
+  animation-duration: 11s;
+  animation-delay: -4s;
+}
+
+/* Botão principal com pulso de energia */
+.bf-cta {
+  box-shadow:
+    0 0 0 0 rgb(255 208 0 / 0.5),
+    0 14px 40px -12px rgb(255 208 0 / 0.75);
+  animation: cta-pulse 2.6s ease-out 2s infinite;
+}
+@keyframes cta-pulse {
+  0% {
+    box-shadow:
+      0 0 0 0 rgb(255 208 0 / 0.45),
+      0 14px 40px -12px rgb(255 208 0 / 0.75);
+  }
+  70%,
+  100% {
+    box-shadow:
+      0 0 0 16px rgb(255 208 0 / 0),
+      0 14px 40px -12px rgb(255 208 0 / 0.75);
+  }
+}
+
+/* Contador */
+.countdown-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0.7rem 0.25rem 0.55rem;
+  border-radius: 16px;
+  border: 1px solid rgb(255 208 0 / 0.22);
+  background: linear-gradient(180deg, rgb(255 255 255 / 0.06), rgb(255 255 255 / 0.015));
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.06);
+}
+.countdown-num {
+  display: block;
+  font-size: clamp(1.7rem, 7vw, 2.4rem);
+  font-weight: 900;
+  font-stretch: 112%;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: #fff;
+  animation: num-tick 0.45s var(--ease-out-expo);
+}
+@keyframes num-tick {
+  from {
+    opacity: 0.2;
+    transform: translate3d(0, -6px, 0);
+  }
+}
+.countdown-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-steel);
+}
+
+/* Selo promocional dos produtos */
+.promo-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  background: var(--color-volt);
+  color: var(--color-ink);
+  font-size: 0.78rem;
+  font-weight: 900;
+  font-stretch: 110%;
+  letter-spacing: 0.04em;
+  box-shadow: 0 8px 24px -8px rgb(255 208 0 / 0.7);
+}
+
+/* Fora da tela: pausa */
+[data-offscreen] .particle,
+[data-offscreen] .seal-ring,
+[data-offscreen] .bf-depth,
+[data-offscreen] .bf-cta,
+[data-offscreen] .promo-bar-sheen {
+  animation-play-state: paused;
+}
+@media (prefers-reduced-motion: reduce) {
+  .particle,
+  .promo-bar-sheen,
+  .bf-discount::after {
+    display: none;
+  }
+  .seal-ring,
+  .bf-depth,
+  .bf-cta {
+    animation: none !important;
+  }
+}
+
+/* Vitrine: profundidade da bateria ao passar o mouse */
+@media (hover: hover) {
+  .product-stage img {
+    transition: transform 0.8s var(--ease-out-expo), filter 0.8s var(--ease-out-expo);
+  }
+  .panel:hover .product-stage img {
+    transform: translate3d(0, -8px, 0) scale(1.04) rotate(-1deg);
+    filter: drop-shadow(0 40px 50px rgb(0 0 0 / 0.6)) drop-shadow(0 0 30px rgb(255 208 0 / 0.18));
+  }
+}
+
+/* Selo: tamanhos relativos ao próprio selo */
+.seal {
+  container-type: inline-size;
+}
+.seal-num {
+  font-size: 19cqw;
+}
+.seal-off {
+  font-size: 8cqw;
+}
+
+/* Desktop: "30% OFF" sempre na mesma linha, proporcional à coluna */
+@media (min-width: 1024px) {
+  .bf-discount {
+    font-size: min(11.5rem, 12.4vw);
+  }
+  .bf-off {
+    font-size: min(4.1rem, 4.4vw);
   }
 }

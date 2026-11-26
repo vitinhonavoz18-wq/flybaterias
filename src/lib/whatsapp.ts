@@ -1,4 +1,5 @@
 import { site } from "@/config/site";
+import { activeCampaign } from "@/config/campaigns";
 
 /** Monta um link wa.me com mensagem pré-preenchida. */
 export function whatsappUrl(message?: string) {
@@ -8,15 +9,23 @@ export function whatsappUrl(message?: string) {
 
 export const phoneUrl = () => `tel:${site.contact.phone}`;
 
+/** Durante uma campanha, os botões gerais usam a mensagem da campanha. */
+const campaignMsg = activeCampaign?.whatsappMessage;
+
 export const messages = {
-  default: "Olá! Vim pelo site da FlyBaterias e gostaria de atendimento.",
-  specialist: "Olá! Vim pelo site da FlyBaterias e gostaria de falar com um especialista sobre baterias.",
-  quote: "Olá! Vim pelo site da FlyBaterias e gostaria de solicitar um orçamento de bateria.",
-  urgent: "Olá! Vim pelo site da FlyBaterias e preciso de uma bateria agora.",
+  default: campaignMsg ?? "Olá! Vim pelo site da FlyBaterias e gostaria de atendimento.",
+  specialist: campaignMsg ?? "Olá! Vim pelo site da FlyBaterias e gostaria de falar com um especialista sobre baterias.",
+  quote: campaignMsg ?? "Olá! Vim pelo site da FlyBaterias e gostaria de solicitar um orçamento de bateria.",
+  urgent: campaignMsg ?? "Olá! Vim pelo site da FlyBaterias e preciso de uma bateria agora.",
+  campaign: campaignMsg ?? "Olá! Vim pelo site da FlyBaterias e gostaria de atendimento.",
   category: (name: string) =>
-    `Olá! Vim pelo site da FlyBaterias e gostaria de consultar a disponibilidade e os valores de ${name.toLowerCase()}.`,
+    activeCampaign
+      ? `${activeCampaign.whatsappMessage}\n\nTenho interesse em: ${name.toLowerCase()}.`
+      : `Olá! Vim pelo site da FlyBaterias e gostaria de consultar a disponibilidade e os valores de ${name.toLowerCase()}.`,
   product: (brand: string, model: string) =>
-    `Olá! Vim pelo site da FlyBaterias e gostaria de consultar o valor da bateria ${brand} ${model}.`,
+    activeCampaign
+      ? `${activeCampaign.whatsappMessage}\n\nTenho interesse na bateria ${brand} ${model}.`
+      : `Olá! Vim pelo site da FlyBaterias e gostaria de consultar o valor da bateria ${brand} ${model}.`,
   tech: (tech: string) =>
     `Olá! Vim pelo site da FlyBaterias e gostaria de saber se meu veículo usa bateria ${tech}.`,
   region: (place: string) =>
@@ -35,7 +44,7 @@ export type VehicleQuery = {
 /** Mensagem do seletor inteligente (formato definido pela FlyBaterias). */
 export function vehicleMessage(v: VehicleQuery) {
   const lines = [
-    "Olá! Vim pelo site da FlyBaterias e gostaria de consultar uma bateria para meu veículo.",
+    activeCampaign?.whatsappMessage ?? "Olá! Vim pelo site da FlyBaterias e gostaria de consultar uma bateria para meu veículo.",
     "",
     `Marca: ${v.make || "-"}`,
     `Modelo: ${v.model || "-"}`,

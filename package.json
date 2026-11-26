@@ -12,9 +12,11 @@
     "test:e2e": "node scripts/e2e.mjs",
     "render:assets": "node scripts/render-assets.mjs",
     "check": "npm run typecheck && npm run lint && npm run build && npm run test:e2e",
-    "deploy": "npm run build && npm run build:worker && wrangler deploy",
-    "preview:cf": "npm run build && npm run build:worker && wrangler dev",
-    "build:worker": "node scripts/build-worker.mjs"
+    "deploy": "npm run build:all && npm run build:worker && wrangler deploy",
+    "preview:cf": "npm run build:all && npm run build:worker && wrangler dev",
+    "build:worker": "node scripts/build-worker.mjs",
+    "build:all": "node scripts/build-all.mjs",
+    "test:campaign": "node scripts/e2e-campaign.mjs"
   },
   "dependencies": {
     "lucide-react": "^1.80.0",
