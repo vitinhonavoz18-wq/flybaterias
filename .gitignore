@@ -9,3 +9,4 @@ next-env.d.ts
 test-results/
 .DS_Store
 .worker/
+.wrangler/
